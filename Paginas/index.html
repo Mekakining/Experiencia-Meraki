@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiencia Meraki · Turismo rural</title>
+    <link rel="stylesheet" href="../CSS/estilos.css/Meraki.css">
+    <link rel="icon" href="../.img/Icono.jpg" type="image/jpeg">
+</head>
+<body>
+
+    <!-- Encabezado / Menú de Navegación -->
+    <header>
+        <div class="header-container">
+            <div class="brand">
+                <a href="Index.html">
+                    <img src="../.img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
+                </a>
+                <a href="Index.html" class="brand-title">Experiencia Meraki</a>
+            </div>
+
+            <nav>
+                <ul>
+                    <li><a href="Index.html" class="active">Inicio</a></li>
+                    <li><a href="Index.html#experiencias">Experiencias</a></li>
+                    <li><a href="Convenios.html">Convenios</a></li>
+                    <li><a href="Planea tu Visita.html">Planea tu Visita</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Sección Principal / Hero -->
+    <section class="hero-section">
+        <p class="hero-eyebrow">Turismo rural · Agroturismo</p>
+        <img src="../.img/Logo.jpg" alt="Logo Experiencia Meraki" class="main-logo">
+        <p class="hero-tagline">Una experiencia con alma de campo</p>
+        <p class="hero-text">
+            Vive el campo colombiano de cerca: cosecha café, acompaña la preparación de la panela
+            y disfruta la calidez de la vida campesina.
+        </p>
+        <a href="Planea tu Visita.html" class="btn btn-primario">Planea tu visita</a>
+    </section>
+
+    <!-- Sección de Actividades -->
+    <p class="section-label" id="experiencias">Nuestras experiencias</p>
+    <h2 class="section-title">Elige tu aventura</h2>
+
+    <main class="activities-container">
+
+        <a href="Estancia.html" class="activity-card">
+            <div class="card-image">
+                <img src="../.img/Icono.jpg" alt="Estancia con comida y experiencia diaria">
+            </div>
+            <div class="card-content">
+                <h3>Estancia con comida y experiencia diaria</h3>
+                <p>Alojamiento e inmersión total en la cotidianidad del campo.</p>
+                <span class="card-link">Conocer más →</span>
+            </div>
+        </a>
+
+        <a href="Cosecha.html" class="activity-card">
+            <div class="card-image">
+                <img src="../.img/Logo.jpg" alt="Cosechar café">
+            </div>
+            <div class="card-content">
+                <h3>Cosechar Café</h3>
+                <p>Recorre lo mejor de cada etapa de la cosecha del grano.</p>
+                <span class="card-link">Conocer más →</span>
+            </div>
+        </a>
+
+        <a href="Panela.html" class="activity-card">
+            <div class="card-image">
+                <img src="../.img/Fabricacion de panela.jpg" alt="Proceso de preparación de la panela">
+            </div>
+            <div class="card-content">
+                <h3>Proceso de Preparación de la Panela</h3>
+                <p>Descubre el arte de elaborar panela de forma artesanal.</p>
+                <span class="card-link">Conocer más →</span>
+            </div>
+        </a>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer>
+        <nav class="footer-nav">
+            <a href="Index.html">Inicio</a>
+            <a href="Index.html#experiencias">Experiencias</a>
+            <a href="Convenios.html">Convenios</a>
+            <a href="Planea tu Visita.html">Planea tu Visita</a>
+            <a href="Administracion.html">Administración</a>
+        </nav>
+        <p>Todos los derechos reservados &copy; Experiencia Meraki 2026</p>
+    </footer>
+
+    <script>
+        (function () {
+            try {
+                var pagina = window.location.pathname.split('/').pop() || 'Index.html';
+                var visitas = JSON.parse(localStorage.getItem('meraki_visitas') || '{}');
+                visitas[pagina] = (visitas[pagina] || 0) + 1;
+                localStorage.setItem('meraki_visitas', JSON.stringify(visitas));
+            } catch (e) { }
+        })();
+    </script>
+
+    <script>
+        (function () {
+            function esc(txt) {
+                return String(txt == null ? '' : txt).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+            try {
+                var data = JSON.parse(localStorage.getItem('meraki_experiencias') || 'null');
+                if (data && data.length) {
+                    var cont = document.querySelector('.activities-container');
+                    if (cont) {
+                        cont.innerHTML = '';
+                        for (var i = 0; i < data.length; i++) {
+                            var exp = data[i];
+                            if (exp.activo === false) { continue; }
+                            var enlace = exp.enlace || 'Planea tu Visita.html#reserva';
+                            var imagen = exp.imagen || '../.img/Logo.jpg';
+                            var card = document.createElement('a');
+                            card.className = 'activity-card';
+                            card.href = enlace;
+                            card.innerHTML = '<div class="card-image"><img src="' + esc(imagen) + '" alt="' + esc(exp.titulo) + '"></div>' +
+                                '<div class="card-content"><h3>' + esc(exp.titulo) + '</h3><p>' + esc(exp.descripcion) + '</p><span class="card-link">Conocer más →</span></div>';
+                            cont.appendChild(card);
+                        }
+                    }
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+</body>
+</html>

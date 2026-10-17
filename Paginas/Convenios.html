@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convenios · Experiencia Meraki</title>
+    <link rel="stylesheet" href="../CSS/estilos.css/Meraki.css">
+    <link rel="icon" href="../.img/Icono.jpg" type="image/jpeg">
+</head>
+<body>
+
+    <!-- Encabezado / Menú de Navegación -->
+    <header>
+        <div class="header-container">
+            <div class="brand">
+                <a href="Index.html">
+                    <img src="../.img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
+                </a>
+                <a href="Index.html" class="brand-title">Experiencia Meraki</a>
+            </div>
+
+            <nav>
+                <ul>
+                    <li><a href="Index.html">Inicio</a></li>
+                    <li><a href="Index.html#experiencias">Experiencias</a></li>
+                    <li><a href="Convenios.html" class="active">Convenios</a></li>
+                    <li><a href="Planea tu Visita.html">Planea tu Visita</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido -->
+    <main class="page-main">
+        <h1>Nuestros Convenios</h1>
+        <p class="page-lead">
+            Trabajamos de la mano con productores locales, fincas cafeteras y operadores turísticos
+            para brindarte una experiencia auténtica e inolvidable.
+        </p>
+
+        <ul class="info-list">
+            <li>
+                <strong>Productores locales</strong>
+                <span>Frutas, hortalizas y productos frescos que llegan directo a tu mesa.</span>
+            </li>
+            <li>
+                <strong>Fincas cafeteras</strong>
+                <span>Recorridos guiados por el cultivo y la cosecha del café de la región.</span>
+            </li>
+            <li>
+                <strong>Operadores turísticos</strong>
+                <span>Transporte y acompañamiento para que tu visita sea segura y cómoda.</span>
+            </li>
+        </ul>
+
+        <div class="cta-row">
+            <a href="Planea tu Visita.html" class="btn btn-primario">Planea tu visita</a>
+            <a href="Index.html" class="btn btn-secundario">Volver al inicio</a>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer>
+        <nav class="footer-nav">
+            <a href="Index.html">Inicio</a>
+            <a href="Index.html#experiencias">Experiencias</a>
+            <a href="Convenios.html">Convenios</a>
+            <a href="Planea tu Visita.html">Planea tu Visita</a>
+            <a href="Administracion.html">Administración</a>
+        </nav>
+        <p>Todos los derechos reservados &copy; Experiencia Meraki 2026</p>
+    </footer>
+
+    <script>
+        (function () {
+            try {
+                var pagina = window.location.pathname.split('/').pop() || 'Index.html';
+                var visitas = JSON.parse(localStorage.getItem('meraki_visitas') || '{}');
+                visitas[pagina] = (visitas[pagina] || 0) + 1;
+                localStorage.setItem('meraki_visitas', JSON.stringify(visitas));
+            } catch (e) { }
+        })();
+    </script>
+
+</body>
+</html>

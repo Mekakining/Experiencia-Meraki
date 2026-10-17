@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración · Experiencia Meraki</title>
+    <link rel="stylesheet" href="../CSS/estilos.css/Meraki.css">
+    <link rel="icon" href="../.img/Icono.jpg" type="image/jpeg">
+</head>
+<body>
+
+    <!-- Encabezado / Menú de Navegación -->
+    <header>
+        <div class="header-container">
+            <div class="brand">
+                <a href="Index.html">
+                    <img src="../.img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
+                </a>
+                <a href="Index.html" class="brand-title">Experiencia Meraki</a>
+            </div>
+
+            <nav>
+                <ul>
+                    <li><a href="Index.html">Inicio</a></li>
+                    <li><a href="Index.html#experiencias">Experiencias</a></li>
+                    <li><a href="Convenios.html">Convenios</a></li>
+                    <li><a href="Planea tu Visita.html">Planea tu Visita</a></li>
+                    <li><a href="Administracion.html" class="active">Administración</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Ventana emergente de inicio de sesión -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <h2>Acceso restringido</h2>
+            <p class="modal-sub">Ingresa tus credenciales para acceder al panel de administración.</p>
+
+            <label for="loginUsuario">Usuario</label>
+            <input type="text" id="loginUsuario" autocomplete="username">
+
+            <label for="loginPassword">Contraseña</label>
+            <div class="password-wrap">
+                <input type="password" id="loginPassword" autocomplete="current-password">
+                <button type="button" class="password-toggle" id="loginToggle">Mostrar</button>
+            </div>
+
+            <p class="login-error" id="loginError">&nbsp;</p>
+
+            <button type="button" class="btn btn-primario btn-block" onclick="login()">Ingresar</button>
+
+            <p class="modal-pie">
+                ¿Aún no tienes credenciales? <a href="Index.html">Volver al inicio</a>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Contenido del panel -->
+    <main class="page-main admin-page" id="adminPage" style="display:none;">
+
+        <div class="session-bar">
+            <span id="sesionInfo"></span>
+            <button type="button" class="btn btn-secundario btn-sm" onclick="logout()">Cerrar sesión</button>
+        </div>
+
+        <h1>Panel de Administración</h1>
+        <p class="page-lead">
+            Control de reservas, contabilidad y visitas del sitio. Ambos roles pueden cambiar los
+            precios de las experiencias; el rol de sistemas puede, además, administrar experiencias
+            y usuarios. Los datos se registran localmente en el navegador.
+        </p>
+
+        <div class="admin-panel">
+            <h2>Reservas hechas</h2>
+            <p class="panel-sub">Registro de solicitudes realizadas desde el formulario de reserva.</p>
+            <div id="reservasContenido"></div>
+        </div>
+
+        <div class="admin-panel">
+            <h2>Contabilidad</h2>
+            <p class="panel-sub">Resumen de solicitudes por experiencia y total de personas esperadas.</p>
+            <div id="contabilidadContenido"></div>
+        </div>
+
+        <div class="admin-panel">
+            <h2>Visitas a las páginas</h2>
+            <p class="panel-sub">Conteo de visitas registradas en cada sección del sitio.</p>
+            <div id="visitasContenido"></div>
+        </div>
+
+        <!-- Gestión de experiencias (ambos roles) -->
+        <div class="admin-panel" id="panelExperiencias" style="display:none;">
+            <h2>Gestión de experiencias</h2>
+            <p class="panel-sub">Ambos roles pueden cambiar el precio de las experiencias; el rol de sistemas puede añadir, editar, desactivar o eliminar experiencias completas.</p>
+
+            <form class="manage-form" id="expForm" onsubmit="return false;">
+                <h3 id="expFormTitulo">Agregar nueva experiencia</h3>
+                <div class="form-grid">
+                    <div class="campo">
+                        <label for="expTitulo">Título</label>
+                        <input type="text" id="expTitulo" placeholder="Ej: Cata de café">
+                    </div>
+                    <div class="campo">
+                        <label for="expImagen">Ruta de la imagen</label>
+                        <input type="text" id="expImagen" placeholder="../.img/Logo.jpg">
+                    </div>
+                    <div class="campo">
+                        <label for="expDescripcion">Descripción</label>
+                        <textarea id="expDescripcion" placeholder="Descripción breve de la experiencia"></textarea>
+                    </div>
+                    <div class="campo">
+                        <label for="expEnlace">Página de destino</label>
+                        <input type="text" id="expEnlace" placeholder="Planea tu Visita.html#reserva">
+                    </div>
+                    <div class="campo">
+                        <label for="expPrecio">Precio por persona (COP)</label>
+                        <input type="number" id="expPrecio" min="0" step="1000" placeholder="Ej: 150000">
+                    </div>
+                    <div class="campo campo-check">
+                        <label for="expActivo">Experiencia activa</label>
+                        <input type="checkbox" id="expActivo" checked>
+                    </div>
+                </div>
+                <div class="acciones-row">
+                    <button type="button" class="btn btn-primario btn-sm" onclick="agregarOActualizarExperiencia()" id="expSubmit">Agregar experiencia</button>
+                    <button type="button" class="btn btn-secundario btn-sm" onclick="cancelarEdicionExperiencia()">Cancelar</button>
+                </div>
+            </form>
+
+            <div id="expListado"></div>
+        </div>
+
+        <!-- Gestión de usuarios (sistemas) -->
+        <div class="admin-panel" id="panelUsuarios" style="display:none;">
+            <h2>Gestión de usuarios</h2>
+            <p class="panel-sub">Crea cuentas, cambia contraseñas o elimina usuarios. Las cuentas principales no se pueden eliminar.</p>
+
+            <form class="manage-form" onsubmit="return false;">
+                <h3>Agregar nuevo usuario</h3>
+                <div class="form-grid">
+                    <div class="campo">
+                        <label for="nuevoUsuario">Usuario</label>
+                        <input type="text" id="nuevoUsuario" placeholder="usuarioNuevo">
+                    </div>
+                    <div class="campo">
+                        <label for="nuevoRol">Rol</label>
+                        <select id="nuevoRol">
+                            <option value="administrador">Administrador</option>
+                            <option value="sistemas">Sistemas</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="nuevoPassword">Contraseña</label>
+                        <div class="password-wrap">
+                            <input type="password" id="nuevoPassword">
+                            <button type="button" class="password-toggle" id="nuevoPassToggle">Mostrar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="acciones-row">
+                    <button type="button" class="btn btn-primario btn-sm" onclick="agregarUsuario()">Agregar usuario</button>
+                </div>
+            </form>
+
+            <div class="manage-form" id="cambioClaveWrap" style="display:none;">
+                <h3 id="cambiarUsuario">Cambiar contraseña</h3>
+                <div class="campo" style="max-width:320px;">
+                    <label for="nuevaClave">Nueva contraseña</label>
+                    <div class="password-wrap">
+                        <input type="password" id="nuevaClave">
+                        <button type="button" class="password-toggle" id="nuevaClaveToggle">Mostrar</button>
+                    </div>
+                </div>
+                <div class="acciones-row">
+                    <button type="button" class="btn btn-primario btn-sm" onclick="guardarNuevaClave()">Guardar nueva clave</button>
+                    <button type="button" class="btn btn-secundario btn-sm" onclick="cancelarCambioClave()">Cancelar</button>
+                </div>
+            </div>
+
+            <div id="usuariosListado"></div>
+        </div>
+
+        <div class="cta-row" id="accionesAdmin">
+            <button type="button" class="btn btn-primario" onclick="limpiarDatos()">Limpiar datos</button>
+            <a href="Index.html" class="btn btn-secundario">Volver al inicio</a>
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer>
+        <nav class="footer-nav">
+            <a href="Index.html">Inicio</a>
+            <a href="Index.html#experiencias">Experiencias</a>
+            <a href="Convenios.html">Convenios</a>
+            <a href="Planea tu Visita.html">Planea tu Visita</a>
+            <a href="Administracion.html">Administración</a>
+        </nav>
+        <p>Todos los derechos reservados &copy; Experiencia Meraki 2026</p>
+    </footer>
+
+    <script>
+        (function () {
+            try {
+                var pagina = window.location.pathname.split('/').pop() || 'Index.html';
+                var visitas = JSON.parse(localStorage.getItem('meraki_visitas') || '{}');
+                visitas[pagina] = (visitas[pagina] || 0) + 1;
+                localStorage.setItem('meraki_visitas', JSON.stringify(visitas));
+            } catch (e) { }
+        })();
+    </script>
+
+    <script>
+        /* ====== SHA-256 (función compatible con archivos locales) ====== */
+        function sha256(ascii) {
+            function rightRotate(value, amount) {
+                return (value >>> amount) | (value << (32 - amount));
+            }
+            var i, j;
+            var mathPow = Math.pow;
+            var maxWord = mathPow(2, 32);
+            var words = [];
+            var asciiBitLength = ascii.length * 8;
+            var result = '';
+
+            var hash = new Array(8);
+            var k = new Array(64);
+            var primeCounter = 0;
+            var isComposite = {};
+            for (var candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (i = 0; i < 313; i += candidate) {
+                        isComposite[i] = candidate;
+                    }
+                    hash[primeCounter] = (mathPow(candidate, .5) * maxWord) | 0;
+                    k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+
+            ascii += '\x80';
+            while (ascii.length % 64 - 56) ascii += '\x00';
+            for (i = 0; i < ascii.length; i++) {
+                j = ascii.charCodeAt(i);
+                if (j >> 8) return;
+                words[i >> 2] |= j << ((3 - i) % 4) * 8;
+            }
+            words[words.length] = ((asciiBitLength / maxWord) | 0);
+            words[words.length] = asciiBitLength;
+
+            for (j = 0; j < words.length;) {
+                var w = words.slice(j, j += 16);
+                var oldHash = hash.slice(0, 8);
+
+                for (i = 0; i < 64; i++) {
+                    var w15 = w[i - 15];
+                    var w2 = w[i - 2];
+                    var a = hash[0];
+                    var e = hash[4];
+                    var temp1 = hash[7]
+                        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                        + ((e & hash[5]) ^ ((~e) & hash[6]))
+                        + k[i]
+                        + (w[i] = (i < 16) ? w[i] : (
+                                w[i - 16]
+                                + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                                + w[i - 7]
+                                + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                            ) | 0
+                        );
+
+                    var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+                    hash[7] = hash[6];
+                    hash[6] = hash[5];
+                    hash[5] = hash[4];
+                    hash[4] = hash[3] + temp1 | 0;
+                    hash[3] = hash[2];
+                    hash[2] = hash[1];
+                    hash[1] = hash[0];
+                    hash[0] = temp1 + temp2 | 0;
+                }
+
+                for (i = 0; i < 8; i++) {
+                    hash[i] = (hash[i] + oldHash[i]) | 0;
+                }
+            }
+
+            for (i = 0; i < 8; i++) {
+                for (j = 3; j + 1; j--) {
+                    var b = (hash[i] >> (j * 8)) & 255;
+                    result += ((b < 16) ? 0 : '') + b.toString(16);
+                }
+            }
+            return result;
+        }
+
+        /* ====== Credenciales y almacenamiento ====== */
+        var SALT = 'meraki2026';
+        var USERS_KEY = 'meraki_usuarios';
+        var EXPERIENCIAS_KEY = 'meraki_experiencias';
+        var SESION_KEY = 'meraki_sesion';
+
+        var SEED_USERS = [
+            { usuario: 'santiago0065', rol: 'sistemas', hash: 'c6a8fe62b85930513a5c10f75530e6915a3d9482698507fd32832ca6df15ba72' },
+            { usuario: 'usuarioX', rol: 'administrador', hash: 'b318f56157f44aa895c5ceea1b5b4d3b068a02ce2c4b4a6d02a816d37d49b78a' }
+        ];
+
+        var SEED_EXPERIENCIAS = [
+            { id: 'estancia', titulo: 'Estancia con comida y experiencia diaria', descripcion: 'Alojamiento e inmersión total en la cotidianidad del campo.', imagen: '../.img/Icono.jpg', enlace: 'Estancia.html', precio: 220000, activo: true },
+            { id: 'cosecha', titulo: 'Cosechar Café', descripcion: 'Recorre lo mejor de cada etapa de la cosecha del grano.', imagen: '../.img/Logo.jpg', enlace: 'Cosecha.html', precio: 130000, activo: true },
+            { id: 'panela', titulo: 'Proceso de Preparación de la Panela', descripcion: 'Descubre el arte de elaborar panela de forma artesanal.', imagen: '../.img/Fabricacion de panela.jpg', enlace: 'Panela.html', precio: 95000, activo: true }
+        ];
+
+        var SEED_NAMES = ['santiago0065', 'usuarioX'];
+
+        function qs(id) { return document.getElementById(id); }
+
+        function esc(txt) {
+            return String(txt == null ? '' : txt).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatearPrecio(valor) {
+            var n = parseFloat(valor);
+            if (!n || isNaN(n)) { return '—'; }
+            return '$ ' + Math.round(n).toLocaleString('es-CO');
+        }
+
+        function hashPassword(usuario, password) {
+            return sha256(SALT + ':' + usuario + ':' + password);
+        }
+
+        function guardar(clave, valor) {
+            try { localStorage.setItem(clave, JSON.stringify(valor)); } catch (e) { }
+        }
+
+        function leer(clave) {
+            try { return JSON.parse(localStorage.getItem(clave) || 'null'); } catch (e) { return null; }
+        }
+
+        function usuarios() {
+            var u = leer(USERS_KEY);
+            if (!Array.isArray(u)) { u = []; }
+            SEED_USERS.forEach(function (s) {
+                var existe = u.some(function (x) { return x.usuario === s.usuario; });
+                if (!existe) { u.push(s); }
+            });
+            guardar(USERS_KEY, u);
+            return u;
+        }
+
+        function experiencias() {
+            var e = leer(EXPERIENCIAS_KEY);
+            if (!Array.isArray(e)) {
+                guardar(EXPERIENCIAS_KEY, SEED_EXPERIENCIAS);
+                return SEED_EXPERIENCIAS.slice();
+            }
+            return e;
+        }
+
+        var expEditandoId = null;
+        var claveIdx = null;
+        var sesionActual = null;
+
+        /* ====== Sesión ====== */
+        function login() {
+            var usuario = qs('loginUsuario').value.trim();
+            var password = qs('loginPassword').value;
+            var err = qs('loginError');
+
+            if (!usuario || !password) {
+                err.textContent = 'Ingresa usuario y contraseña.';
+                return;
+            }
+
+            var u = usuarios();
+            var found = null;
+            for (var i = 0; i < u.length; i++) {
+                if (u[i].usuario === usuario) { found = u[i]; break; }
+            }
+
+            if (found && found.hash === hashPassword(usuario, password)) {
+                sesionActual = { usuario: found.usuario, rol: found.rol };
+                try { sessionStorage.setItem(SESION_KEY, JSON.stringify(sesionActual)); } catch (e) { }
+                iniciarVista();
+            } else {
+                err.textContent = 'Usuario o contraseña incorrectos.';
+            }
+        }
+
+        function logout() {
+            try { sessionStorage.removeItem(SESION_KEY); } catch (e) { }
+            location.reload();
+        }
+
+        function esRolSistemas() {
+            return sesionActual && sesionActual.rol === 'sistemas';
+        }
+
+        function configurarFormExperiencias() {
+            var completo = esRolSistemas();
+            var bloqueados = ['expTitulo', 'expImagen', 'expDescripcion', 'expEnlace', 'expActivo'];
+            for (var i = 0; i < bloqueados.length; i++) {
+                qs(bloqueados[i]).disabled = !completo;
+            }
+            if (completo) {
+                qs('expSubmit').style.display = '';
+                qs('expSubmit').textContent = expEditandoId === null ? 'Agregar experiencia' : 'Guardar cambios';
+            } else if (expEditandoId === null) {
+                qs('expForm').reset();
+                qs('expActivo').checked = true;
+                qs('expFormTitulo').textContent = 'Establecer el precio de una experiencia';
+                qs('expSubmit').style.display = 'none';
+            } else {
+                qs('expFormTitulo').textContent = 'Editando precio';
+                qs('expSubmit').style.display = '';
+                qs('expSubmit').textContent = 'Guardar precio';
+            }
+        }
+
+        function iniciarVista() {
+            var rolTexto = sesionActual.rol === 'sistemas' ? 'Sistemas' : 'Administrador';
+            qs('loginModal').style.display = 'none';
+            qs('adminPage').style.display = 'block';
+            qs('sesionInfo').innerHTML = 'Sesión iniciada como <strong>' + esc(sesionActual.usuario) + '</strong> <span class="badge">' + rolTexto + '</span>';
+
+            renderReservas();
+            renderContabilidad();
+            renderVisitas();
+
+            qs('panelExperiencias').style.display = '';
+            configurarFormExperiencias();
+            renderExperiencias();
+
+            if (esRolSistemas()) {
+                qs('panelUsuarios').style.display = '';
+                renderUsuarios();
+            } else {
+                qs('panelUsuarios').style.display = 'none';
+                qs('accionesAdmin').style.display = 'none';
+            }
+        }
+
+        /* ====== Tablas de control ====== */
+        function formatearFecha(fecha) {
+            if (!fecha) { return '—'; }
+            var d = new Date(fecha + 'T00:00:00');
+            return d.toLocaleDateString('es-CO');
+        }
+
+        function estadoReserva(r) {
+            var e = r.estado || 'pendiente';
+            var mapa = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada', reagendada: 'Reagendada', cancelada: 'Cancelada' };
+            return { clave: e, texto: mapa[e] || 'Pendiente' };
+        }
+
+        function contactoReserva(r) {
+            var f = r.factura || {};
+            var h = (r.huespedes && r.huespedes[0]) || {};
+            return { nombre: f.nombre || h.nombre || '—', email: f.email || h.email || '', telefono: h.telefono || '' };
+        }
+
+        function detalleReservaHTML(r) {
+            var html = '<div class="detalle-reserva">';
+            html += '<div class="detalle-bloque"><h4>Huéspedes</h4>';
+            var hs = r.huespedes || [];
+            if (!hs.length) {
+                html += '<p class="empty-msg">Esta reserva no tiene datos de huéspedes.</p>';
+            } else {
+                for (var i = 0; i < hs.length; i++) {
+                    var h = hs[i];
+                    html += '<p><strong>' + esc(h.nombre) + '</strong> · ' + esc(h.tipoId) + ' ' + esc(h.numeroId) +
+                        ' · ' + esc(h.edad) + ' años · ' + esc(h.email) + ' · ' + esc(h.telefono) + '</p>';
+                }
+            }
+            html += '</div>';
+            var f = r.factura || {};
+            html += '<div class="detalle-bloque"><h4>Factura</h4><p>' +
+                esc(f.nombre) + ' · ' + esc(f.tipoId) + ' ' + esc(f.numeroId) + ' · ' + esc(f.email) + '</p></div>';
+            html += '</div>';
+            return html;
+        }
+
+        function renderReservas() {
+            var reservas = leer('meraki_reservas');
+            if (!Array.isArray(reservas)) { reservas = []; }
+            var cont = qs('reservasContenido');
+            if (!reservas.length) {
+                cont.innerHTML = '<p class="empty-msg">Aún no hay reservas registradas.</p>';
+                return;
+            }
+            var html = '<table class="admin-table"><thead><tr><th>#</th><th>Experiencia</th><th>Fechas</th><th>Personas</th><th>Titular</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+            for (var i = 0; i < reservas.length; i++) {
+                var r = reservas[i];
+                var total = (parseInt(r.adultos, 10) || 0) + (parseInt(r.ninos, 10) || 0);
+                var est = estadoReserva(r);
+                var ct = contactoReserva(r);
+                html += '<tr>' +
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + esc(r.experiencia) + '</td>' +
+                    '<td>' + formatearFecha(r.llegada) + '<br><span class="cell-sub">' + formatearFecha(r.salida) + '</span></td>' +
+                    '<td>' + total + ' <span class="cell-sub">(' + (r.adultos || 0) + ' ad · ' + (r.ninos || 0) + ' ni)</span></td>' +
+                    '<td>' + esc(ct.nombre) + '<br><span class="cell-sub">' + esc(ct.email) + '</span></td>' +
+                    '<td><span class="badge badge-' + est.clave + '">' + est.texto + '</span></td>' +
+                    '<td class="actions-cell">' +
+                        '<button class="link-btn" onclick="verDetalleReserva(' + i + ')">Detalle</button>' +
+                        '<button class="link-btn" onclick="aceptarReserva(' + i + ')">Aceptar</button>' +
+                        '<button class="link-btn danger" onclick="rechazarReserva(' + i + ')">Rechazar</button>' +
+                        '<button class="link-btn" onclick="reagendarReserva(' + i + ')">Reagendar</button>' +
+                        '<button class="link-btn" onclick="contactarReserva(' + i + ')">Contactar</button>' +
+                    '</td>' +
+                    '</tr>' +
+                    '<tr class="detail-row" id="detalle-' + i + '" style="display:none;"><td colspan="7">' + detalleReservaHTML(r) + '</td></tr>';
+            }
+            html += '</tbody></table>';
+            cont.innerHTML = html;
+        }
+
+        function verDetalleReserva(i) {
+            var row = qs('detalle-' + i);
+            if (row) { row.style.display = row.style.display === 'none' ? '' : 'none'; }
+        }
+
+        function marcarGestion(r) {
+            r.gestion = { por: sesionActual.usuario, rol: sesionActual.rol, fecha: new Date().toISOString() };
+        }
+
+        function aceptarReserva(i) {
+            var reservas = leer('meraki_reservas') || [];
+            if (!reservas[i]) { return; }
+            reservas[i].estado = 'aceptada';
+            marcarGestion(reservas[i]);
+            guardar('meraki_reservas', reservas);
+            renderReservas();
+            renderContabilidad();
+        }
+
+        function rechazarReserva(i) {
+            if (!confirm('¿Rechazar esta reserva? Las fechas volverán a quedar libres.')) { return; }
+            var reservas = leer('meraki_reservas') || [];
+            if (!reservas[i]) { return; }
+            reservas[i].estado = 'rechazada';
+            marcarGestion(reservas[i]);
+            guardar('meraki_reservas', reservas);
+            renderReservas();
+            renderContabilidad();
+        }
+
+        function conflictoReagenda(reservas, exceptoIdx, exp, l, s) {
+            for (var i = 0; i < reservas.length; i++) {
+                if (i === exceptoIdx) { continue; }
+                var r = reservas[i];
+                var est = r.estado || 'pendiente';
+                if (est === 'rechazada' || est === 'cancelada') { continue; }
+                if (r.experiencia !== exp) { continue; }
+                var rl = r.llegada;
+                var rs = r.salida || r.llegada;
+                if (l <= rs && rl <= s) { return r; }
+            }
+            return null;
+        }
+
+        function reagendarReserva(i) {
+            var reservas = leer('meraki_reservas') || [];
+            var r = reservas[i];
+            if (!r) { return; }
+            var nuevaLlegada = prompt('Nueva fecha de llegada (AAAA-MM-DD):', r.llegada);
+            if (nuevaLlegada === null) { return; }
+            var nuevaSalida = prompt('Nueva fecha de salida (AAAA-MM-DD):', r.salida || r.llegada);
+            if (nuevaSalida === null) { return; }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(nuevaLlegada) || !/^\d{4}-\d{2}-\d{2}$/.test(nuevaSalida)) {
+                alert('Formato de fecha inválido. Usa AAAA-MM-DD.');
+                return;
+            }
+            if (nuevaSalida < nuevaLlegada) {
+                alert('La fecha de salida no puede ser anterior a la de llegada.');
+                return;
+            }
+            if (conflictoReagenda(reservas, i, r.experiencia, nuevaLlegada, nuevaSalida)) {
+                alert('Esas fechas ya están ocupadas por otra reserva de la misma experiencia.');
+                return;
+            }
+            r.llegada = nuevaLlegada;
+            r.salida = nuevaSalida;
+            r.estado = 'reagendada';
+            marcarGestion(r);
+            guardar('meraki_reservas', reservas);
+            renderReservas();
+            renderContabilidad();
+        }
+
+        function contactarReserva(i) {
+            var reservas = leer('meraki_reservas') || [];
+            var r = reservas[i];
+            if (!r) { return; }
+            var ct = contactoReserva(r);
+            var cuerpo = 'Hola ' + (ct.nombre || '') + ', te escribimos de Experiencia Meraki respecto a tu solicitud para ' +
+                r.experiencia + ' (' + formatearFecha(r.llegada) + ' a ' + formatearFecha(r.salida) + ').';
+            if (ct.email) {
+                window.location.href = 'mailto:' + encodeURIComponent(ct.email) +
+                    '?subject=' + encodeURIComponent('Tu reserva en Experiencia Meraki') +
+                    '&body=' + encodeURIComponent(cuerpo);
+            } else if (ct.telefono) {
+                var num = ct.telefono.replace(/\D/g, '');
+                if (num.length === 10) { num = '57' + num; }
+                window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(cuerpo), '_blank');
+            } else {
+                alert('Esta reserva no tiene datos de contacto.');
+            }
+        }
+
+        function ingresoEstimado(reserva) {
+            var precio = 0;
+            var ex = experiencias();
+            for (var i = 0; i < ex.length; i++) {
+                if (ex[i].titulo === reserva.experiencia) { precio = parseFloat(ex[i].precio) || 0; break; }
+            }
+            var adultos = parseInt(reserva.adultos, 10) || 0;
+            var ninos = parseInt(reserva.ninos, 10) || 0;
+            var noches = 1;
+            if (reserva.llegada && reserva.salida) {
+                var dif = Math.round((new Date(reserva.salida + 'T00:00:00') - new Date(reserva.llegada + 'T00:00:00')) / 86400000);
+                if (dif >= 1) { noches = dif; }
+            }
+            return (adultos * precio + ninos * precio * 0.5) * noches;
+        }
+
+        function renderContabilidad() {
+            var reservas = leer('meraki_reservas');
+            if (!Array.isArray(reservas)) { reservas = []; }
+            var cont = qs('contabilidadContenido');
+            if (!reservas.length) {
+                cont.innerHTML = '<p class="empty-msg">Sin movimientos por registrar.</p>';
+                return;
+            }
+            var porExperiencia = {};
+            var totalPersonas = 0;
+            var totalIngreso = 0;
+            var totalReservas = 0;
+            for (var i = 0; i < reservas.length; i++) {
+                var r = reservas[i];
+                var estado = r.estado || 'pendiente';
+                if (estado === 'rechazada' || estado === 'cancelada') { continue; }
+                var nombre = r.experiencia || 'Otro';
+                if (!porExperiencia[nombre]) { porExperiencia[nombre] = { cantidad: 0, personas: 0, ingreso: 0 }; }
+                var personas = (parseInt(r.adultos, 10) || 0) + (parseInt(r.ninos, 10) || 0);
+                var ingreso = ingresoEstimado(r);
+                porExperiencia[nombre].cantidad++;
+                porExperiencia[nombre].personas += personas;
+                porExperiencia[nombre].ingreso += ingreso;
+                totalReservas++;
+                totalPersonas += personas;
+                totalIngreso += ingreso;
+            }
+            var html = '<table class="admin-table"><thead><tr><th>Experiencia</th><th>Reservas</th><th>Personas</th><th>Ingreso estimado</th></tr></thead><tbody>';
+            for (var nombre in porExperiencia) {
+                if (porExperiencia.hasOwnProperty(nombre)) {
+                    html += '<tr><td>' + esc(nombre) + '</td><td>' + porExperiencia[nombre].cantidad + '</td><td>' + porExperiencia[nombre].personas + '</td><td>' + formatearPrecio(porExperiencia[nombre].ingreso) + '</td></tr>';
+                }
+            }
+            html += '<tr class="total-row"><td><strong>Total general</strong></td><td><strong>' + totalReservas + '</strong></td><td><strong>' + totalPersonas + '</strong></td><td><strong>' + formatearPrecio(totalIngreso) + '</strong></td></tr>';
+            html += '</tbody></table>';
+            html += '<p class="empty-msg">Solo se cuentan las reservas activas (pendientes, aceptadas y reagendadas). Los niños se calculan al 50%. La estancia se calcula por noches según el rango de fechas solicitado y el precio por persona asignado en la gestión de experiencias.</p>';
+            cont.innerHTML = html;
+        }
+
+        function renderVisitas() {
+            var visitas = leer('meraki_visitas');
+            if (!visitas) { visitas = {}; }
+            var cont = qs('visitasContenido');
+            var paginas = Object.keys(visitas);
+            if (!paginas.length) {
+                cont.innerHTML = '<p class="empty-msg">Aún no se registran visitas.</p>';
+                return;
+            }
+            paginas.sort(function (a, b) { return (visitas[b] || 0) - (visitas[a] || 0); });
+            var html = '<table class="admin-table"><thead><tr><th>Página</th><th>Visitas</th></tr></thead><tbody>';
+            for (var i = 0; i < paginas.length; i++) {
+                html += '<tr><td>' + esc(paginas[i]) + '</td><td>' + (visitas[paginas[i]] || 0) + '</td></tr>';
+            }
+            html += '</tbody></table>';
+            cont.innerHTML = html;
+        }
+
+        function limpiarDatos() {
+            if (confirm('¿Confirmas que deseas limpiar todas las reservas y el registro de visitas?')) {
+                localStorage.removeItem('meraki_reservas');
+                localStorage.removeItem('meraki_visitas');
+                renderReservas();
+                renderContabilidad();
+                renderVisitas();
+                alert('Datos locales limpiados.');
+            }
+        }
+
+        /* ====== Gestión de experiencias ====== */
+        function renderExperiencias() {
+            var ex = experiencias();
+            var cont = qs('expListado');
+            if (!ex.length) {
+                cont.innerHTML = '<p class="empty-msg">Aún no hay experiencias registradas.</p>';
+                return;
+            }
+            var html = '<table class="admin-table"><thead><tr><th>Título</th><th>Descripción</th><th>Precio</th><th>Activa</th><th>Acciones</th></tr></thead><tbody>';
+            for (var i = 0; i < ex.length; i++) {
+                var e = ex[i];
+                var acciones = esRolSistemas()
+                    ? '<button class="link-btn" onclick="editarExperiencia(' + i + ')">Editar</button> ' +
+                      '<button class="link-btn danger" onclick="eliminarExperiencia(' + i + ')">Eliminar</button>'
+                    : '<button class="link-btn" onclick="editarExperiencia(' + i + ')">Editar precio</button>';
+                html += '<tr>' +
+                    '<td>' + esc(e.titulo) + '</td>' +
+                    '<td>' + esc(e.descripcion) + '</td>' +
+                    '<td>' + formatearPrecio(e.precio) + '</td>' +
+                    '<td>' + (e.activo ? 'Sí' : 'No') + '</td>' +
+                    '<td class="actions-cell">' + acciones + '</td></tr>';
+            }
+            html += '</tbody></table>';
+            cont.innerHTML = html;
+        }
+
+        function agregarOActualizarExperiencia() {
+            var titulo = qs('expTitulo').value.trim();
+            var descripcion = qs('expDescripcion').value.trim();
+            var imagen = qs('expImagen').value.trim();
+            var enlace = qs('expEnlace').value.trim();
+            var precio = parseFloat(qs('expPrecio').value) || 0;
+            var activo = qs('expActivo').checked;
+
+            if (!titulo || !descripcion) {
+                alert('El título y la descripción son obligatorios.');
+                return;
+            }
+            if (!enlace) { enlace = 'Planea tu Visita.html#reserva'; }
+            if (!imagen) { imagen = '../.img/Logo.jpg'; }
+
+            var ex = experiencias();
+            if (expEditandoId !== null) {
+                ex[expEditandoId] = { id: ex[expEditandoId].id, titulo: titulo, descripcion: descripcion, imagen: imagen, enlace: enlace, precio: precio, activo: activo };
+                expEditandoId = null;
+            } else {
+                ex.push({ id: 'exp' + Date.now(), titulo: titulo, descripcion: descripcion, imagen: imagen, enlace: enlace, precio: precio, activo: activo });
+            }
+            guardar(EXPERIENCIAS_KEY, ex);
+
+            qs('expForm').reset();
+            qs('expActivo').checked = true;
+            configurarFormExperiencias();
+            renderExperiencias();
+        }
+
+        function editarExperiencia(idx) {
+            var ex = experiencias();
+            var e = ex[idx];
+            expEditandoId = idx;
+            qs('expTitulo').value = e.titulo;
+            qs('expDescripcion').value = e.descripcion;
+            qs('expImagen').value = e.imagen || '';
+            qs('expEnlace').value = e.enlace || '';
+            qs('expPrecio').value = e.precio || '';
+            qs('expActivo').checked = e.activo !== false;
+            configurarFormExperiencias();
+            if (esRolSistemas()) {
+                qs('expFormTitulo').textContent = 'Editando: ' + e.titulo;
+            }
+            qs('expForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function cancelarEdicionExperiencia() {
+            expEditandoId = null;
+            qs('expForm').reset();
+            qs('expActivo').checked = true;
+            configurarFormExperiencias();
+        }
+
+        function eliminarExperiencia(idx) {
+            if (!confirm('¿Eliminar esta experiencia del sitio?')) { return; }
+            var ex = experiencias();
+            ex.splice(idx, 1);
+            guardar(EXPERIENCIAS_KEY, ex);
+            if (expEditandoId === idx) { cancelarEdicionExperiencia(); }
+            renderExperiencias();
+        }
+
+        /* ====== Gestión de usuarios ====== */
+        function renderUsuarios() {
+            var u = usuarios();
+            var cont = qs('usuariosListado');
+            var html = '<table class="admin-table"><thead><tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>';
+            for (var i = 0; i < u.length; i++) {
+                var protegido = SEED_NAMES.indexOf(u[i].usuario) !== -1;
+                html += '<tr>' +
+                    '<td>' + esc(u[i].usuario) + '</td>' +
+                    '<td>' + (u[i].rol === 'sistemas' ? 'Sistemas' : 'Administrador') + '</td>' +
+                    '<td class="actions-cell">' +
+                    '<button class="link-btn" onclick="mostrarCambioClave(' + i + ')">Cambiar clave</button> ' +
+                    (protegido ? '' : '<button class="link-btn danger" onclick="eliminarUsuario(' + i + ')">Eliminar</button>') +
+                    '</td></tr>';
+            }
+            html += '</tbody></table>';
+            cont.innerHTML = html;
+        }
+
+        function agregarUsuario() {
+            var nombre = qs('nuevoUsuario').value.trim();
+            var password = qs('nuevoPassword').value;
+            var rol = qs('nuevoRol').value;
+
+            if (!nombre || !password) {
+                alert('El usuario y la contraseña son obligatorios.');
+                return;
+            }
+            var u = usuarios();
+            var existe = u.some(function (x) { return x.usuario === nombre; });
+            if (existe) {
+                alert('Ese usuario ya existe.');
+                return;
+            }
+            u.push({ usuario: nombre, rol: rol, hash: hashPassword(nombre, password) });
+            guardar(USERS_KEY, u);
+            qs('nuevoUsuario').value = '';
+            qs('nuevoPassword').value = '';
+            renderUsuarios();
+        }
+
+        function mostrarCambioClave(idx) {
+            var u = usuarios();
+            claveIdx = idx;
+            qs('cambiarUsuario').textContent = 'Cambiar contraseña de: ' + u[idx].usuario;
+            qs('nuevaClave').value = '';
+            qs('cambioClaveWrap').style.display = 'block';
+            qs('cambioClaveWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function guardarNuevaClave() {
+            if (claveIdx === null) { return; }
+            var nueva = qs('nuevaClave').value;
+            if (!nueva) {
+                alert('Ingresa la nueva contraseña.');
+                return;
+            }
+            var u = usuarios();
+            u[claveIdx].hash = hashPassword(u[claveIdx].usuario, nueva);
+            guardar(USERS_KEY, u);
+            claveIdx = null;
+            qs('cambioClaveWrap').style.display = 'none';
+            renderUsuarios();
+            alert('Contraseña actualizada correctamente.');
+        }
+
+        function cancelarCambioClave() {
+            claveIdx = null;
+            qs('cambioClaveWrap').style.display = 'none';
+        }
+
+        function eliminarUsuario(idx) {
+            var u = usuarios();
+            if (SEED_NAMES.indexOf(u[idx].usuario) !== -1) {
+                alert('No se puede eliminar la cuenta principal.');
+                return;
+            }
+            if (!confirm('¿Eliminar el usuario ' + u[idx].usuario + '?')) { return; }
+            u.splice(idx, 1);
+            guardar(USERS_KEY, u);
+            renderUsuarios();
+        }
+
+        /* ====== Configuración inicial ====== */
+        function configurarToggle(botonId, inputId) {
+            var btn = qs(botonId);
+            var inp = qs(inputId);
+            btn.addEventListener('click', function () {
+                var esVisible = inp.type === 'text';
+                inp.type = esVisible ? 'password' : 'text';
+                btn.textContent = esVisible ? 'Mostrar' : 'Ocultar';
+            });
+        }
+
+        (function () {
+            configurarToggle('loginToggle', 'loginPassword');
+            configurarToggle('nuevoPassToggle', 'nuevoPassword');
+            configurarToggle('nuevaClaveToggle', 'nuevaClave');
+
+            qs('loginUsuario').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { login(); }
+            });
+            qs('loginPassword').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { login(); }
+            });
+
+            try { sesionActual = JSON.parse(sessionStorage.getItem(SESION_KEY) || 'null'); } catch (e) { sesionActual = null; }
+
+            if (sesionActual && sesionActual.usuario) {
+                iniciarVista();
+            } else {
+                qs('loginModal').style.display = 'flex';
+            }
+        })();
+    </script>
+
+</body>
+</html>
