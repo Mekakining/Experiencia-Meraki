@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planea tu Visita · Experiencia Meraki</title>
-    <link rel="stylesheet" href="../CSS/estilos.css/Meraki.css">
-    <link rel="icon" href="../.img/Icono.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="../CSS/css/Meraki.css">
+    <link rel="icon" href="../img/Icono.jpg" type="image/jpeg">
 </head>
 <body>
 
@@ -13,16 +13,16 @@
     <header>
         <div class="header-container">
             <div class="brand">
-                <a href="Index.html">
-                    <img src="../.img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
+                <a href="../index.html">
+                    <img src="../img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
                 </a>
-                <a href="Index.html" class="brand-title">Experiencia Meraki</a>
+                <a href="../index.html" class="brand-title">Experiencia Meraki</a>
             </div>
 
             <nav>
                 <ul>
-                    <li><a href="Index.html">Inicio</a></li>
-                    <li><a href="Index.html#experiencias">Experiencias</a></li>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="../index.html#experiencias">Experiencias</a></li>
                     <li><a href="Convenios.html">Convenios</a></li>
                     <li><a href="Planea tu Visita.html" class="active">Planea tu Visita</a></li>
                 </ul>
@@ -50,9 +50,7 @@
                     <div class="booking-field">
                         <label for="exp">Experiencia</label>
                         <select id="exp" name="exp">
-                            <option value="Estancia con comida y experiencia diaria">Estancia con comida</option>
-                            <option value="Cosechar Café">Cosechar Café</option>
-                            <option value="Proceso de Preparación de la Panela">Proceso de la Panela</option>
+                            <option value="">Cargando experiencias…</option>
                         </select>
                     </div>
 
@@ -157,9 +155,10 @@
             </p>
 
             <p class="aviso">
-                <strong>Aviso de disponibilidad:</strong> las fechas de una experiencia no pueden repetirse.
-                Si ya existe una reserva activa para las fechas elegidas, el sistema te lo indicará y deberás
-                escoger otras o esperar a que se liberen. Todas las experiencias quedan sujetas a confirmación.
+                <strong>Aviso de disponibilidad:</strong> las fechas son de uso exclusivo: si ya existe una
+                reserva activa para las fechas elegidas (en cualquier experiencia), el sistema te lo indicará
+                y deberás escoger otras o esperar a que se liberen. Todas las experiencias quedan sujetas a
+                confirmación.
             </p>
         </section>
 
@@ -197,8 +196,8 @@
     <!-- Pie de página -->
     <footer>
         <nav class="footer-nav">
-            <a href="Index.html">Inicio</a>
-            <a href="Index.html#experiencias">Experiencias</a>
+            <a href="../index.html">Inicio</a>
+            <a href="../index.html#experiencias">Experiencias</a>
             <a href="Convenios.html">Convenios</a>
             <a href="Planea tu Visita.html">Planea tu Visita</a>
             <a href="Administracion.html">Administración</a>
@@ -206,14 +205,12 @@
         <p>Todos los derechos reservados &copy; Experiencia Meraki 2026</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/meraki.js"></script>
+
     <script>
         (function () {
-            try {
-                var pagina = window.location.pathname.split('/').pop() || 'Index.html';
-                var visitas = JSON.parse(localStorage.getItem('meraki_visitas') || '{}');
-                visitas[pagina] = (visitas[pagina] || 0) + 1;
-                localStorage.setItem('meraki_visitas', JSON.stringify(visitas));
-            } catch (e) { }
+            if (window.Meraki) { Meraki.registrarVisita('Planea tu Visita'); }
         })();
     </script>
 
@@ -244,12 +241,7 @@
                 { v: 'RC', t: 'Registro civil' }
             ];
 
-            var params = new URLSearchParams(window.location.search);
-            var expParam = params.get('exp');
-            if (expParam) {
-                var mapa = { estancia: 'Estancia con comida y experiencia diaria', cosecha: 'Cosechar Café', panela: 'Proceso de Preparación de la Panela' };
-                if (mapa[expParam]) { expSel.value = mapa[expParam]; }
-            }
+            var ocupadas = [];
 
             function esc(t) {
                 return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
@@ -276,33 +268,20 @@
                 return d.toLocaleDateString('es-CO');
             }
 
-            /* ====== Disponibilidad de fechas ====== */
-            function reservasActivas() {
-                var rs = [];
-                try { rs = JSON.parse(localStorage.getItem('meraki_reservas') || '[]'); } catch (e) { rs = []; }
-                if (!Array.isArray(rs)) { rs = []; }
-                var activas = [];
-                for (var i = 0; i < rs.length; i++) {
-                    var r = rs[i];
-                    var est = r.estado || 'pendiente';
-                    if (est === 'rechazada' || est === 'cancelada') { continue; }
-                    var fin = r.salida || r.llegada;
-                    if (fin && fin < hoy) { continue; }
-                    activas.push(r);
-                }
-                return activas;
+            function identificadorSeleccionado() {
+                var opt = expSel.options[expSel.selectedIndex];
+                return opt ? opt.getAttribute('data-identificador') : '';
             }
 
-            function buscarConflicto(exp, l, s) {
+            /* ====== Disponibilidad (global) ====== */
+            function buscarConflicto(l, s) {
                 if (!l) { return null; }
                 s = s || l;
-                var act = reservasActivas();
-                for (var i = 0; i < act.length; i++) {
-                    var r = act[i];
-                    if (r.experiencia !== exp) { continue; }
-                    var rl = r.llegada;
-                    var rs = r.salida || r.llegada;
-                    if (l <= rs && rl <= s) { return r; }
+                for (var i = 0; i < ocupadas.length; i++) {
+                    var o = ocupadas[i];
+                    var ol = o.llegada;
+                    var os = o.salida || o.llegada;
+                    if (l <= os && ol <= s) { return o; }
                 }
                 return null;
             }
@@ -310,14 +289,22 @@
             function actualizarDisponibilidad() {
                 if (!llegada.value) { limpiarMensaje(); submitBtn.disabled = false; return; }
                 var s = salida.value || llegada.value;
-                var c = buscarConflicto(expSel.value, llegada.value, s);
+                var c = buscarConflicto(llegada.value, s);
                 if (c) {
                     mostrarMensaje('Las fechas ' + formatearFechaLegible(c.llegada) + ' a ' + formatearFechaLegible(c.salida) +
-                        ' ya están reservadas para esta experiencia. Elige otras fechas o escríbenos para ver alternativas.', 'error');
+                        ' ya están reservadas. Elige otras fechas o escríbenos para ver alternativas.', 'error');
                     submitBtn.disabled = true;
                 } else {
                     limpiarMensaje();
                     submitBtn.disabled = false;
+                }
+            }
+
+            async function refrescarOcupadas() {
+                try {
+                    ocupadas = await Meraki.fechasOcupadas();
+                } catch (e) {
+                    console.warn('[Meraki] disponibilidad:', e.message);
                 }
             }
 
@@ -384,6 +371,37 @@
                 return t;
             }
 
+            /* ====== Carga inicial ====== */
+            async function cargarExperiencias() {
+                try {
+                    var exps = await Meraki.listarExperiencias();
+                    expSel.innerHTML = '';
+                    if (!exps.length) {
+                        var o0 = document.createElement('option');
+                        o0.value = '';
+                        o0.textContent = 'No hay experiencias disponibles';
+                        expSel.appendChild(o0);
+                        return;
+                    }
+                    for (var i = 0; i < exps.length; i++) {
+                        var o = document.createElement('option');
+                        o.value = exps[i].id;
+                        o.textContent = exps[i].titulo;
+                        o.setAttribute('data-identificador', exps[i].identificador);
+                        expSel.appendChild(o);
+                    }
+                    var params = new URLSearchParams(window.location.search);
+                    var expParam = params.get('exp');
+                    if (expParam) {
+                        for (var j = 0; j < exps.length; j++) {
+                            if (exps[j].identificador === expParam) { expSel.value = exps[j].id; break; }
+                        }
+                    }
+                } catch (e) {
+                    mostrarMensaje('No se pudieron cargar las experiencias. ' + e.message, 'error');
+                }
+            }
+
             /* ====== Interfaz ====== */
             expSel.addEventListener('change', actualizarDisponibilidad);
 
@@ -401,9 +419,13 @@
                 facturaCampos.style.display = facturaIgual.checked ? 'none' : 'grid';
             });
 
-            form.addEventListener('submit', function (e) {
+            form.addEventListener('submit', async function (e) {
                 e.preventDefault();
 
+                if (!expSel.value) {
+                    mostrarMensaje('Selecciona una experiencia.', 'error');
+                    return;
+                }
                 if (!llegada.value || !salida.value) {
                     mostrarMensaje('Selecciona las fechas de llegada y salida.', 'error');
                     return;
@@ -413,8 +435,7 @@
                     return;
                 }
 
-                var conflicto = buscarConflicto(expSel.value, llegada.value, salida.value);
-                if (conflicto) {
+                if (buscarConflicto(llegada.value, salida.value)) {
                     actualizarDisponibilidad();
                     return;
                 }
@@ -428,7 +449,7 @@
                     }
                 }
 
-                if (expSel.value === 'Cosechar Café') {
+                if (identificadorSeleccionado() === 'cosecha') {
                     for (var j = 0; j < huespedes.length; j++) {
                         if (parseInt(huespedes[j].edad, 10) < 13) {
                             mostrarMensaje('La experiencia "Cosechar Café" es para personas mayores de 13 años.', 'error');
@@ -440,7 +461,7 @@
                 var factura;
                 if (facturaIgual.checked) {
                     var p0 = huespedes[0];
-                    factura = { nombre: p0.nombre, tipoId: p0.tipoId, numeroId: p0.numeroId, email: p0.email };
+                    factura = { nombre: p0.nombre, tipo_id: p0.tipoId, numero_id: p0.numeroId, correo: p0.email };
                 } else {
                     var fNombre = document.getElementById('facturaNombre').value.trim();
                     var fNumero = document.getElementById('facturaNumeroId').value.trim();
@@ -451,31 +472,39 @@
                     }
                     factura = {
                         nombre: fNombre,
-                        tipoId: document.getElementById('facturaTipoId').value,
-                        numeroId: fNumero,
-                        email: fEmail
+                        tipo_id: document.getElementById('facturaTipoId').value,
+                        numero_id: fNumero,
+                        correo: fEmail
                     };
                 }
 
-                var reserva = {
-                    id: 'res' + Date.now(),
-                    experiencia: expSel.value,
-                    llegada: llegada.value,
-                    salida: salida.value,
-                    adultos: parseInt(adultosSel.value, 10),
-                    ninos: parseInt(ninosSel.value, 10),
-                    huespedes: huespedes,
-                    factura: factura,
-                    estado: 'pendiente',
-                    fechaSolicitud: new Date().toISOString()
-                };
+                var huespedesApi = huespedes.map(function (x) {
+                    return {
+                        nombre: x.nombre,
+                        tipo_id: x.tipoId,
+                        numero_id: x.numeroId,
+                        edad: parseInt(x.edad, 10),
+                        correo: x.email,
+                        telefono: x.telefono
+                    };
+                });
 
+                submitBtn.disabled = true;
                 try {
-                    var reservas = JSON.parse(localStorage.getItem('meraki_reservas') || '[]');
-                    reservas.push(reserva);
-                    localStorage.setItem('meraki_reservas', JSON.stringify(reservas));
+                    await Meraki.crearReserva({
+                        experiencia_id: expSel.value,
+                        llegada: llegada.value,
+                        salida: salida.value,
+                        adultos: parseInt(adultosSel.value, 10),
+                        ninos: parseInt(ninosSel.value, 10),
+                        factura: factura,
+                        huespedes: huespedesApi
+                    });
                 } catch (err) {
-                    mostrarMensaje('No fue posible guardar la solicitud. Inténtalo de nuevo.', 'error');
+                    submitBtn.disabled = false;
+                    mostrarMensaje('No se pudo registrar la reserva: ' + err.message, 'error');
+                    await refrescarOcupadas();
+                    actualizarDisponibilidad();
                     return;
                 }
 
@@ -483,13 +512,13 @@
 
                 var cuerpo = 'Nueva solicitud de reserva\n' +
                     '________________________________\n' +
-                    'Experiencia: ' + reserva.experiencia + '\n' +
-                    'Fecha de llegada: ' + formatearFechaLegible(reserva.llegada) + '\n' +
-                    'Fecha de salida: ' + formatearFechaLegible(reserva.salida) + '\n' +
-                    'Adultos: ' + reserva.adultos + '\n' +
-                    'Niños: ' + reserva.ninos + '\n\n' +
+                    'Experiencia: ' + expSel.options[expSel.selectedIndex].textContent + '\n' +
+                    'Fecha de llegada: ' + formatearFechaLegible(llegada.value) + '\n' +
+                    'Fecha de salida: ' + formatearFechaLegible(salida.value) + '\n' +
+                    'Adultos: ' + adultosSel.value + '\n' +
+                    'Niños: ' + ninosSel.value + '\n\n' +
                     'Huéspedes:\n' + detalleHuespedes(huespedes) + '\n' +
-                    'Factura a nombre de: ' + factura.nombre + ' (' + factura.tipoId + ' ' + factura.numeroId + ', ' + factura.email + ')\n\n' +
+                    'Factura a nombre de: ' + factura.nombre + ' (' + factura.tipo_id + ' ' + factura.numero_id + ', ' + factura.correo + ')\n\n' +
                     'Todas las experiencias quedan sujetas a confirmación.';
 
                 try {
@@ -502,12 +531,20 @@
                 llegada.min = hoy;
                 salida.min = hoy;
                 facturaCampos.style.display = 'none';
+                adultosSel.value = '1';
+                ninosSel.value = '0';
                 construirHuespedes();
+                await refrescarOcupadas();
                 submitBtn.disabled = false;
             });
 
+            /* Inicio */
             construirHuespedes();
-            actualizarDisponibilidad();
+            (async function iniciar() {
+                await refrescarOcupadas();
+                await cargarExperiencias();
+                actualizarDisponibilidad();
+            })();
         })();
     </script>
 

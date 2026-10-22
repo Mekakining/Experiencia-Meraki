@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proceso de la Panela · Experiencia Meraki</title>
-    <link rel="stylesheet" href="../CSS/estilos.css/Meraki.css">
-    <link rel="icon" href="../.img/Icono.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="../CSS/css/Meraki.css">
+    <link rel="icon" href="../img/Icono.jpg" type="image/jpeg">
 </head>
 <body>
 
@@ -13,16 +13,16 @@
     <header>
         <div class="header-container">
             <div class="brand">
-                <a href="Index.html">
-                    <img src="../.img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
+                <a href="../index.html">
+                    <img src="../img/Icono.jpg" alt="Icono Experiencia Meraki" class="nav-icon">
                 </a>
-                <a href="Index.html" class="brand-title">Experiencia Meraki</a>
+                <a href="../index.html" class="brand-title">Experiencia Meraki</a>
             </div>
 
             <nav>
                 <ul>
-                    <li><a href="Index.html">Inicio</a></li>
-                    <li><a href="Index.html#experiencias" class="active">Experiencias</a></li>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="../index.html#experiencias" class="active">Experiencias</a></li>
                     <li><a href="Convenios.html">Convenios</a></li>
                     <li><a href="Planea tu Visita.html">Planea tu Visita</a></li>
                 </ul>
@@ -32,10 +32,10 @@
 
     <!-- Detalle de la experiencia -->
     <main class="exp-main">
-        <a href="Index.html" class="exp-back">← Volver al inicio</a>
+        <a href="../index.html" class="exp-back">← Volver al inicio</a>
 
         <div class="exp-image">
-            <img src="../.img/Fabricacion de panela.jpg" alt="Proceso de preparación de la panela">
+            <img src="../img/Fabricacion de panela.jpg" alt="Proceso de preparación de la panela">
         </div>
 
         <p class="exp-category">Taller artesanal</p>
@@ -124,8 +124,8 @@
     <!-- Pie de página -->
     <footer>
         <nav class="footer-nav">
-            <a href="Index.html">Inicio</a>
-            <a href="Index.html#experiencias">Experiencias</a>
+            <a href="../index.html">Inicio</a>
+            <a href="../index.html#experiencias">Experiencias</a>
             <a href="Convenios.html">Convenios</a>
             <a href="Planea tu Visita.html">Planea tu Visita</a>
             <a href="Administracion.html">Administración</a>
@@ -133,14 +133,11 @@
         <p>Todos los derechos reservados &copy; Experiencia Meraki 2026</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/meraki.js"></script>
     <script>
         (function () {
-            try {
-                var pagina = window.location.pathname.split('/').pop() || 'Index.html';
-                var visitas = JSON.parse(localStorage.getItem('meraki_visitas') || '{}');
-                visitas[pagina] = (visitas[pagina] || 0) + 1;
-                localStorage.setItem('meraki_visitas', JSON.stringify(visitas));
-            } catch (e) { }
+            if (window.Meraki) { Meraki.registrarVisita('Panela'); }
         })();
     </script>
 
