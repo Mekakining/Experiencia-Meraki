@@ -10,8 +10,8 @@
    NUNCA pongas aqui la clave service_role / secret.
    ============================================================ */
 
-var MERAKI_URL = 'https://TU-PROYECTO.supabase.co';
-var MERAKI_ANON_KEY = 'TU_CLAVE_PUBLICA_ANON';
+var MERAKI_URL = 'https://lpazmfpczyhldemiqeqq.supabase.co';
+var MERAKI_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwYXptZnBjenlobGRlbWlxZXFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDE5ODksImV4cCI6MjEwNzY3Nzk4OX0.ARuaVEQThFK4qckVcyc5LvvD8aQa7ZVTKyo9pW6UlmA';
 
 (function () {
     'use strict';
